@@ -1,0 +1,72 @@
+# Relatrio de Auditoria do Repositrio (robot_arm)
+**Data e Hora:** 2026-10-29
+**Branch criada:** cleanup-digital-twin
+
+---
+## 1. Mapeamento da rvore de Arquivos e Categorizao
+
+Total de arquivos auditados no repositrio: **157**
+
+## 2. Auditoria Detalhada dos Modelos STL
+
+| Arquivo | Faces | Vrtices | Dimenses (X, Y, Z em mm) | Watertight? | Escala | Verso Identificada |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| 3d_models\braço_robótico\base.stl | 5288 | 2632 | 45.0 x 45.0 x 29.5 | Sim | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\base_2_weg_v2.stl | 6996 | 3490 | 45.0 x 45.0 x 24.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\base_modificada.stl | 6048 | 3018 | 45.0 x 45.0 x 24.0 | No | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\base_servo_1.stl | 5282 | 2629 | 45.0 x 45.0 x 29.5 | Sim | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\braco_1_v1.stl | 870 | 429 | 16.5 x 80.0 x 5.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\braco_2_v1.stl | 1078 | 533 | 16.5 x 80.0 x 12.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\braco_2_weg_v1.stl | 978 | 483 | 18.5 x 80.0 x 12.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\engrenagem_garra_1_v1.stl | 2342 | 1171 | 28.0 x 28.0 x 7.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\engrenagem_servo_v1.stl | 1548 | 774 | 20.0 x 20.0 x 5.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\garra_direita_v1.stl | 940 | 470 | 58.4 x 14.0 x 9.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\garra_esquerda_v1.stl | 954 | 477 | 58.4 x 14.5 x 9.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\original_backup\Arm 2 WEG by Schutz.stl | 978 | 483 | 18.5 x 80.0 x 12.0 | Sim | mm | Verso B (SEM servo / Impresso 3D) |
+| 3d_models\braço_robótico\original_backup\Base 2 WEG by Schutz.stl | 6996 | 3490 | 45.0 x 45.0 x 24.0 | Sim | mm | Verso B (SEM servo / Impresso 3D) |
+| 3d_models\braço_robótico\original_backup\Brazo 1 v1.stl | 870 | 429 | 16.5 x 80.0 x 5.0 | Sim | mm | Verso B (SEM servo / Impresso 3D) |
+| 3d_models\braço_robótico\original_backup\Brazo 2 v1.stl | 1078 | 533 | 16.5 x 80.0 x 12.0 | Sim | mm | Verso B (SEM servo / Impresso 3D) |
+| 3d_models\braço_robótico\original_backup\Pinza derecha v1.stl | 940 | 470 | 58.4 x 14.0 x 9.0 | Sim | mm | Verso B (SEM servo / Impresso 3D) |
+| 3d_models\braço_robótico\original_backup\Pinza izquierda v1.stl | 954 | 477 | 58.4 x 14.5 x 9.0 | Sim | mm | Verso B (SEM servo / Impresso 3D) |
+| 3d_models\braço_robótico\original_backup\Piñon Servo v1.stl | 1548 | 774 | 20.0 x 20.0 x 5.0 | Sim | mm | Verso B (SEM servo / Impresso 3D) |
+| 3d_models\braço_robótico\original_backup\Piñon pinza 1 v1.stl | 2342 | 1171 | 28.0 x 28.0 x 7.0 | Sim | mm | Verso B (SEM servo / Impresso 3D) |
+| 3d_models\braço_robótico\original_backup\Soporte Pinza v1.stl | 1170 | 579 | 29.0 x 44.0 x 4.0 | Sim | mm | Verso B (SEM servo / Impresso 3D) |
+| 3d_models\braço_robótico\original_backup\Tapa v2.stl | 5618 | 2805 | 38.0 x 38.0 x 29.5 | Sim | mm | Verso B (SEM servo / Impresso 3D) |
+| 3d_models\braço_robótico\suporte_garra_v1.stl | 1170 | 579 | 29.0 x 44.0 x 4.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\braço_robótico\tampa_v2.stl | 5618 | 2805 | 38.0 x 38.0 x 29.5 | Sim | mm | Ambgua / Derivada |
+| 3d_models\case\caixa_weg.stl | 29976 | 9389 | 189.0 x 115.9 x 58.0 | No | mm | Gabinete/Case (no  brao) |
+| 3d_models\case\tampa_weg.stl | 7634 | 3720 | 155.0 x 115.9 x 8.1 | No | mm | Gabinete/Case (no  brao) |
+| 3d_models\referencia\pecas_novas\Mont3 - base_Servo-1.STL | 5252 | 2614 | 45.0 x 45.0 x 29.5 | Sim | mm | **Verso A (COM servo / MuJoCo)** |
+| 3d_models\referencia\pecas_novas\Mont3 - base_garra-1.STL | 2660 | 1324 | 29.0 x 44.0 x 10.0 | Sim | mm | **Verso A (COM servo / MuJoCo)** |
+| 3d_models\referencia\pecas_novas\Mont3 - braco_1-1.STL | 1178 | 581 | 26.5 x 63.3 x 63.3 | Sim | mm | **Verso A (COM servo / MuJoCo)** |
+| 3d_models\referencia\pecas_novas\Mont3 - braco_2_correto-1.STL | 1364 | 674 | 18.5 x 80.0 x 26.5 | Sim | mm | **Verso A (COM servo / MuJoCo)** |
+| 3d_models\referencia\pecas_novas\Mont3 - garra_direita-1.STL | 878 | 439 | 14.0 x 58.4 x 9.0 | Sim | mm | **Verso A (COM servo / MuJoCo)** |
+| 3d_models\referencia\pecas_novas\Mont3 - garra_esquerda-1.STL | 900 | 450 | 14.5 x 58.4 x 9.0 | Sim | mm | **Verso A (COM servo / MuJoCo)** |
+| 3d_models\referencia\pecas_novas\Mont3 - tampa-1.STL | 3418 | 1703 | 38.0 x 38.0 x 29.5 | Sim | mm | **Verso A (COM servo / MuJoCo)** |
+| 3d_models\referencia\pecas_novas\base.STL | 5172 | 2578 | 45.0 x 45.0 x 24.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\referencia\pecas_novas\base_garra.STL | 2660 | 1324 | 29.0 x 44.0 x 10.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\referencia\pecas_novas\base_servo.stl | 5288 | 2632 | 45.0 x 45.0 x 29.5 | Sim | mm | Ambgua / Derivada |
+| 3d_models\referencia\pecas_novas\braco_1.STL | 1190 | 587 | 26.5 x 63.3 x 63.3 | No | mm | Ambgua / Derivada |
+| 3d_models\referencia\pecas_novas\braco_2.STL | 1380 | 682 | 18.5 x 80.0 x 26.5 | No | mm | Ambgua / Derivada |
+| 3d_models\referencia\pecas_novas\garra_direita.STL | 878 | 439 | 14.0 x 58.4 x 9.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\referencia\pecas_novas\garra_esquerda.STL | 900 | 450 | 14.5 x 58.4 x 9.0 | Sim | mm | Ambgua / Derivada |
+| 3d_models\referencia\pecas_novas\tampa.STL | 3422 | 1705 | 38.0 x 38.0 x 29.5 | No | mm | Ambgua / Derivada |
+| 3d_models\referencia\robo_montado_stl.stl | 15658 | 7793 | 48.5 x 139.7 x 105.3 | Sim | mm | Montagem Completa Rgida |
+| simulation\assets\base.STL | 5172 | 2578 | 45.0 x 45.0 x 24.0 | Sim | mm | **Verso A (COM servo / MuJoCo)** |
+| simulation\assets\base_2_weg_v2.stl | 6996 | 3490 | 45.0 x 45.0 x 24.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\base_garra.STL | 2660 | 1324 | 29.0 x 44.0 x 10.0 | Sim | mm | **Verso A (COM servo / MuJoCo)** |
+| simulation\assets\braco_1.STL | 1190 | 587 | 26.5 x 63.3 x 63.3 | No | mm | **Verso A (COM servo / MuJoCo)** |
+| simulation\assets\braco_1_v1.stl | 870 | 429 | 16.5 x 80.0 x 5.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\braco_2.STL | 1380 | 682 | 18.5 x 80.0 x 26.5 | No | mm | **Verso A (COM servo / MuJoCo)** |
+| simulation\assets\braco_2_v1.stl | 1078 | 533 | 16.5 x 80.0 x 12.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\braco_2_weg_v1.stl | 978 | 483 | 18.5 x 80.0 x 12.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\braco_2_weg_v1_as_exported.stl | 978 | 483 | 18.5 x 80.0 x 12.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\engrenagem_garra_1_v1.stl | 2342 | 1171 | 28.0 x 28.0 x 7.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\engrenagem_servo_v1.stl | 1548 | 774 | 20.0 x 20.0 x 5.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\garra_direita.STL | 878 | 439 | 14.0 x 58.4 x 9.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\garra_direita_v1.stl | 940 | 470 | 58.4 x 14.0 x 9.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\garra_esquerda.STL | 900 | 450 | 14.5 x 58.4 x 9.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\garra_esquerda_v1.stl | 954 | 477 | 58.4 x 14.5 x 9.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\suporte_garra_v1.stl | 1170 | 579 | 29.0 x 44.0 x 4.0 | Sim | mm | Ambgua / Derivada |
+| simulation\assets\tampa.STL | 3422 | 1705 | 38.0 x 38.0 x 29.5 | No | mm | **Verso A (COM servo / MuJoCo)** |
+| simulation\assets\tampa_v2.stl | 5618 | 2805 | 38.0 x 38.0 x 29.5 | Sim | mm | Ambgua / Derivada |

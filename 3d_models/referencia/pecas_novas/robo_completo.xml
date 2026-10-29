@@ -1,0 +1,87 @@
+<mujoco model="robot_arm_digital_twin">
+  <!-- Gêmeo Digital Completo (Mont3) — Todas as malhas na origem global dos STLs (mm -> m).
+       Coordenadas das juntas extraídas dos eixos cilíndricos reais das malhas exportadas
+       (confirmadas com a medição do vértice Z = 77.5861541 mm na Junta 2):
+       - J1 (Base -> Tampa, giro Z):          CAD=(-9.53, 2.36, 54.31)       -> STL pos="0.022828 0.051405 0.054312"
+       - J2 (Tampa -> Braço 1, giro X):       CAD=(2.50, 8.7746, 77.5862)    -> STL pos="0.034824 0.057804 0.077586"
+       - J3 (Braço 1 -> Braço 2, giro X):     CAD=(-9.3961, -36.9681, 123.3752) -> STL pos="0.022953 0.012061 0.123375"
+       - J4_esq (Base Garra -> Dedo Esq, Z):  CAD=(-18.3747, 44.7573, 113.5454) -> STL pos="0.013974 0.093787 0.113545"
+       - J4_dir (Base Garra -> Dedo Dir, Z):  CAD=(0.1253, 44.7573, 113.5454)   -> STL pos="0.032474 0.093787 0.113545"
+  -->
+  <compiler angle="degree" meshdir="." autolimits="true"/>
+  <option timestep="0.002" gravity="0 0 -9.81"/>
+
+  <visual>
+    <headlight ambient="0.45 0.45 0.45" diffuse="0.7 0.7 0.7" specular="0.2 0.2 0.2"/>
+    <global offwidth="1280" offheight="960"/>
+  </visual>
+
+  <default>
+    <geom contype="0" conaffinity="0"/>
+    <joint damping="0.05" armature="0.001"/>
+  </default>
+
+  <asset>
+    <mesh name="base_servo"     file="Mont3 - base_Servo-1.STL"         scale="0.001 0.001 0.001"/>
+    <mesh name="tampa"          file="Mont3 - tampa-1.STL"              scale="0.001 0.001 0.001"/>
+    <mesh name="braco_1"        file="Mont3 - braco_1-1.STL"            scale="0.001 0.001 0.001"/>
+    <mesh name="braco_2"        file="Mont3 - braco_2_correto-1.STL"    scale="0.001 0.001 0.001"/>
+    <mesh name="base_garra"     file="Mont3 - base_garra-1.STL"         scale="0.001 0.001 0.001"/>
+    <mesh name="garra_esquerda" file="Mont3 - garra_esquerda-1.STL"     scale="0.001 0.001 0.001"/>
+    <mesh name="garra_direita"  file="Mont3 - garra_direita-1.STL"      scale="0.001 0.001 0.001"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0.1 -0.2 0.5" dir="0 0.3 -1" diffuse="0.8 0.8 0.8"/>
+    <geom name="chao" type="plane" pos="0 0 0.030236" size="0.5 0.5 0.01" rgba="0.88 0.88 0.88 1"/>
+
+    <!-- Elo 0: Base fixa -->
+    <body name="base" pos="0 0 0">
+      <geom type="mesh" mesh="base_servo" rgba="0.55 0.55 0.55 1"/>
+
+      <!-- Elo 1: Tampa giratória (J1 - Giro da Base em Z) -->
+      <body name="tampa" pos="0 0 0">
+        <joint name="j1_base" type="hinge" axis="0 0 1" pos="0.022828 0.051405 0.054312" range="-90 90"/>
+        <geom type="mesh" mesh="tampa" rgba="0.12 0.12 0.12 1"/>
+
+        <!-- Elo 2: Braço 1 (J2 - Ombro em X) -->
+        <body name="braco_1" pos="0 0 0">
+          <joint name="j2_ombro" type="hinge" axis="1 0 0" pos="0.034824 0.057804 0.077586" range="-60 60"/>
+          <geom type="mesh" mesh="braco_1" rgba="0.00 0.65 0.92 1"/>
+
+          <!-- Elo 3: Braço 2 + Suporte da Garra (J3 - Cotovelo em X) -->
+          <body name="braco_2" pos="0 0 0">
+            <joint name="j3_cotovelo" type="hinge" axis="1 0 0" pos="0.022953 0.012061 0.123375" range="-60 60"/>
+            <geom type="mesh" mesh="braco_2"    rgba="0.00 0.30 0.80 1"/>
+            <geom type="mesh" mesh="base_garra" rgba="0.60 0.20 0.80 1"/>
+
+            <!-- Dedo Esquerdo (J4_esq - Giro em +Z: valores positivos abrem o dedo) -->
+            <body name="garra_esquerda" pos="0 0 0">
+              <joint name="j4_garra_esq" type="hinge" axis="0 0 1" pos="0.013974 0.093787 0.113545" range="-2 35"/>
+              <geom type="mesh" mesh="garra_esquerda" rgba="0.90 0.15 0.15 1"/>
+            </body>
+
+            <!-- Dedo Direito (J4_dir - Giro em -Z: valores positivos também abrem o dedo) -->
+            <body name="garra_direita" pos="0 0 0">
+              <joint name="j4_garra_dir" type="hinge" axis="0 0 -1" pos="0.032474 0.093787 0.113545" range="-2 35"/>
+              <geom type="mesh" mesh="garra_direita" rgba="0.15 0.75 0.20 1"/>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- Acoplamento por engrenagem entre os dois dedos da garra (abrem e fecham simetricamente) -->
+  <equality>
+    <joint joint1="j4_garra_dir" joint2="j4_garra_esq" polycoef="0 1 0 0 0"/>
+  </equality>
+
+  <!-- Atuadores de posição (servos) -->
+  <actuator>
+    <position name="servo_j1_base"     joint="j1_base"      kp="2.0" ctrlrange="-90 90"/>
+    <position name="servo_j2_ombro"    joint="j2_ombro"     kp="2.0" ctrlrange="-60 60"/>
+    <position name="servo_j3_cotovelo" joint="j3_cotovelo"  kp="2.0" ctrlrange="-60 60"/>
+    <position name="servo_j4_garra"    joint="j4_garra_esq" kp="1.0" ctrlrange="0 35"/>
+  </actuator>
+</mujoco>
