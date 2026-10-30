@@ -1,5 +1,6 @@
 mujoco>=3.0
 numpy
 pillow
+pyserial
 # opcional (sim/experiments/inspect_stl.py):
 # trimesh
