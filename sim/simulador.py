@@ -524,361 +524,326 @@ class SimuladorState:
 
 
 def create_tk_panel(state: SimuladorState):
-    """Cria o painel gráfico Tkinter com sliders, conversão PCA9685 (us/tick) e ponte Serial ESP32."""
+    """Cria a interface SCHUTZ CONTROLS no estilo cockpit hardware MSI Afterburner."""
     import tkinter as tk
-    from tkinter import ttk
+    from collections import deque
 
+    W, H = 780, 500
     root = tk.Tk()
-    root.title("Gêmeo Digital MG90 + PCA9685 · robot_arm")
-    root.geometry("500x660")
-    root.configure(bg="#111827")
+    root.title("SCHUTZ CONTROLS // 4-DOF SERVO COCKPIT")
+    root.geometry(f"{W}x{H}")
+    root.configure(bg="#0b0d10")
     root.resizable(False, False)
 
-    style = ttk.Style(root)
-    style.theme_use("clam")
+    cv = tk.Canvas(root, width=W, height=H, bg="#0b0d10", highlightthickness=0, bd=0)
+    cv.pack(fill="both", expand=True)
 
-    # Cabeçalho
-    hdr = tk.Frame(root, bg="#1f2937", padx=14, pady=10)
-    hdr.pack(fill="x")
-    tk.Label(
-        hdr,
-        text="🦾 Gêmeo Digital 4-DOF (ESP32 + PCA9685 + MG90)",
-        font=("Segoe UI", 11, "bold"),
-        fg="#38bdf8",
-        bg="#1f2937",
-    ).pack(anchor="w")
-    status_lbl = tk.Label(
-        hdr,
-        text="Pose Zero (0.0° = 1500 us / tick 307 · idêntica ao view_mockup.py)",
-        font=("Segoe UI", 9),
-        fg="#e5e7eb",
-        bg="#1f2937",
-    )
-    status_lbl.pack(anchor="w", pady=(2, 0))
+    # Histórico para o gráfico inferior estilo Rivatuner (últimas 120 amostras dos 4 pulsos em us)
+    hist_len = 120
+    pulse_history = [deque([1500.0] * hist_len, maxlen=hist_len) for _ in range(4)]
 
-    # Barra de conexão Serial ESP32 / Wokwi
-    ser_frame = tk.Frame(root, bg="#1e293b", padx=14, pady=8)
-    ser_frame.pack(fill="x", pady=(2, 0))
-    tk.Label(ser_frame, text="🔌 Porta ESP32:", font=("Segoe UI", 9, "bold"), fg="#93c5fd", bg="#1e293b").pack(
-        side="left"
+    # ==================== CHASSIS METÁLICO E MOLDURAS (ESTILO AFTERBURNER) ====================
+    # Moldura externa chanfrada (bevel metálico)
+    cv.create_polygon(
+        18, 18, 250, 18, 270, 6, 510, 6, 530, 18, W - 18, 18,
+        W - 6, 30, W - 6, 336, W - 18, 348, 18, 348, 6, 336, 6, 30,
+        fill="#1e222a", outline="#4b5563", width=2
     )
+    # Painel interno escuro escovado
+    cv.create_polygon(
+        24, 26, 252, 26, 272, 12, 508, 12, 528, 26, W - 24, 26,
+        W - 14, 36, W - 14, 330, W - 24, 340, 24, 340, 14, 330, 14, 36,
+        fill="#13161c", outline="#2d333f", width=1
+    )
+
+    # Placa superior central chanfrada: SCHUTZ / C O N T R O L S
+    cv.create_polygon(
+        248, 6, 532, 6, 512, 50, 268, 50,
+        fill="#222630", outline="#64748b", width=2
+    )
+    cv.create_line(276, 47, 504, 47, fill="#ef4444", width=2)
+    cv.create_text(W // 2, 20, text="S C H U T Z", font=("Segoe UI", 13, "bold italic"), fill="#f8fafc")
+    cv.create_text(W // 2, 37, text="C  O  N  T  R  O  L  S", font=("Consolas", 8, "bold"), fill="#94a3b8")
+
+    # Coluna central rebaixada para os sliders
+    cv.create_rectangle(274, 56, 506, 332, fill="#0f1217", outline="#262b36", width=1)
+
+    # ==================== MEDIDORES RADIAIS DUPLOS (ESQUERDA E DIREITA) ====================
+    def draw_static_dial(cx, cy, r, top_tag, bot_tag):
+        # Anel metálico externo
+        cv.create_oval(cx - r - 8, cy - r - 8, cx + r + 8, cy + r + 8, fill="#262b35", outline="#525b6c", width=2)
+        cv.create_oval(cx - r, cy - r, cx + r, cy + r, fill="#0c0e12", outline="#333a48", width=2)
+        cv.create_oval(cx - r + 18, cy - r + 18, cx + r - 18, cy + r - 18, outline="#1e2430", width=1)
+
+        # Marcações de escala (-90° a +90° mapeados em arco de 210° a -30°)
+        for deg in range(-90, 91, 6):
+            ang_rad = math.radians(90.0 - deg * (120.0 / 90.0))
+            ca, sa = math.cos(ang_rad), math.sin(ang_rad)
+            is_major = (deg % 30 == 0)
+            r_out = r - 3
+            r_in = r - (12 if is_major else 7)
+            col = "#cbd5e1" if is_major else "#475569"
+            cv.create_line(
+                cx + r_in * ca, cy - r_in * sa,
+                cx + r_out * ca, cy - r_out * sa,
+                fill=col, width=2 if is_major else 1
+            )
+            if is_major:
+                r_txt = r - 22
+                cv.create_text(
+                    cx + r_txt * ca, cy - r_txt * sa,
+                    text=f"{deg:+d}" if deg != 0 else "0",
+                    font=("Consolas", 7, "bold"), fill="#94a3b8"
+                )
+
+        # Divisórias internas estilo Afterburner
+        cv.create_line(cx - r + 24, cy, cx + r - 24, cy, fill="#262c38", width=1)
+        cv.create_line(cx - r + 32, cy - 32, cx + r - 32, cy - 32, fill="#1c212b", width=1)
+        cv.create_line(cx - r + 32, cy + 32, cx + r - 32, cy + 32, fill="#1c212b", width=1)
+
+        # Rótulos fixos
+        cv.create_rectangle(cx - 42, cy - 66, cx + 42, cy - 48, fill="#171b22", outline="#2e3646")
+        cv.create_text(cx, cy - 57, text=top_tag, font=("Segoe UI", 7, "bold"), fill="#94a3b8")
+
+        cv.create_rectangle(cx - 42, cy + 48, cx + 42, cy + 66, fill="#171b22", outline="#2e3646")
+        cv.create_text(cx, cy + 57, text=bot_tag, font=("Segoe UI", 7, "bold"), fill="#94a3b8")
+
+    LCX, LCY, DR = 144, 190, 110
+    RCX, RCY = 636, 190
+    draw_static_dial(LCX, LCY, DR, "J1 BASE", "J2 SHOULDER")
+    draw_static_dial(RCX, RCY, DR, "J3 ELBOW", "J4 GRIPPER")
+
+    # Elementos dinâmicos dos medidores (ponteiros no aro e leituras digitais)
+    l_top_deg = cv.create_text(LCX - 8, LCY - 15, text="+0.0°", font=("Consolas", 15, "bold"), fill="#f8fafc")
+    l_top_us = cv.create_text(LCX + 46, LCY - 12, text="1500us", font=("Consolas", 8), fill="#ef4444")
+    l_bot_deg = cv.create_text(LCX - 8, LCY + 16, text="+0.0°", font=("Consolas", 15, "bold"), fill="#f8fafc")
+    l_bot_us = cv.create_text(LCX + 46, LCY + 19, text="1500us", font=("Consolas", 8), fill="#38bdf8")
+
+    r_top_deg = cv.create_text(RCX - 8, RCY - 15, text="+0.0°", font=("Consolas", 15, "bold"), fill="#f8fafc")
+    r_top_us = cv.create_text(RCX + 46, RCY - 12, text="1500us", font=("Consolas", 8), fill="#a855f7")
+    r_bot_deg = cv.create_text(RCX - 8, RCY + 16, text="+0.0°", font=("Consolas", 15, "bold"), fill="#f8fafc")
+    r_bot_us = cv.create_text(RCX + 46, RCY + 19, text="1500us", font=("Consolas", 8), fill="#10b981")
+
+    ptr_j1 = cv.create_polygon(0, 0, 0, 0, 0, 0, fill="#ef4444", outline="#fca5a5")
+    ptr_j2 = cv.create_polygon(0, 0, 0, 0, 0, 0, fill="#38bdf8", outline="#bae6fd")
+    ptr_j3 = cv.create_polygon(0, 0, 0, 0, 0, 0, fill="#a855f7", outline="#e9d5ff")
+    ptr_j4 = cv.create_polygon(0, 0, 0, 0, 0, 0, fill="#10b981", outline="#a7f3d0")
+
+    def update_dial_pointer(poly_id, cx, cy, r, deg_val):
+        ang = math.radians(90.0 - max(-90.0, min(90.0, deg_val)) * (120.0 / 90.0))
+        ca, sa = math.cos(ang), math.sin(ang)
+        pa, psa = -sa, ca
+        tip_x, tip_y = cx + (r - 13) * ca, cy - (r - 13) * sa
+        b1_x, b1_y = cx + (r - 2) * ca + 4.5 * pa, cy - (r - 2) * sa - 4.5 * psa
+        b2_x, b2_y = cx + (r - 2) * ca - 4.5 * pa, cy - (r - 2) * sa + 4.5 * psa
+        cv.coords(poly_id, tip_x, tip_y, b1_x, b1_y, b2_x, b2_y)
+
+    # ==================== COLUNA CENTRAL: 5 SLIDERS SEGMENTADOS + 3 BOTÕES TÁTICOS ====================
+    slider_defs = [
+        ("J1 BASE (Z)", J1_MIN_DEG, J1_MAX_DEG, "#ef4444"),
+        ("J2 SHOULDER (X)", J2_MIN_DEG, J2_MAX_DEG, "#38bdf8"),
+        ("J3 ELBOW (X)", J3_MIN_DEG, J3_MAX_DEG, "#a855f7"),
+        ("J4 GRIPPER", GARRA_MIN_DEG, GARRA_MAX_DEG, "#10b981"),
+        ("SPEED (DEG/S)", 10.0, 120.0, "#f59e0b"),
+    ]
+
+    SX0, SX1 = 290, 490
+    SW = SX1 - SX0
+    slider_items = []
+
+    for idx, (label, lo, hi, accent) in enumerate(slider_defs):
+        sy = 78 + idx * 43
+        cv.create_text(SX0, sy - 11, text=label, anchor="w", font=("Segoe UI", 8, "bold"), fill="#cbd5e1")
+        val_id = cv.create_text(SX1, sy - 11, text="+0.0°", anchor="e", font=("Consolas", 8, "bold"), fill=accent)
+
+        # Trilho escuro e marcas segmentadas estilo Afterburner
+        cv.create_rectangle(SX0, sy, SX1, sy + 10, fill="#090b0e", outline="#272c37")
+        for tx in range(SX0 + 4, SX1 - 2, 6):
+            cv.create_line(tx, sy + 2, tx, sy + 8, fill="#1e232d", width=1)
+
+        fill_id = cv.create_rectangle(SX0 + 1, sy + 2, SX0 + 1, sy + 8, fill=accent, outline="")
+        knob_id = cv.create_oval(SX0 - 6, sy - 3, SX0 + 6, sy + 13, fill="#cbd5e1", outline="#0f172a", width=2)
+        slider_items.append((lo, hi, sy, val_id, fill_id, knob_id, accent))
+
+    active_slider = {"idx": None}
+
+    def set_slider_from_x(idx, x_pixel):
+        lo, hi, sy, _, _, _, _ = slider_items[idx]
+        ratio = max(0.0, min(1.0, (x_pixel - SX0) / float(SW)))
+        val = lo + ratio * (hi - lo)
+        if idx < 4:
+            if state.auto_loop:
+                state.set_mode(False)
+            state.manual_target_deg[idx] = val
+            state.manual_target_deg[:] = clamp_safe_workspace(*state.manual_target_deg)
+            state.gui_dirty = True
+        else:
+            state.max_deg_per_sec = round(val)
+
+    # Botões táticos inferiores da coluna central (ZERO | AUTO LOOP | IK TARGET)
+    btn_defs = [
+        ("ZERO", 286, 294, 350, 322, state.reset_zero_mockup),
+        ("AUTO LOOP", 356, 294, 424, 322, lambda: state.set_mode(not state.auto_loop)),
+        ("IK TARGET", 430, 294, 494, 322, state.move_to_ball_ik),
+    ]
+    canvas_btns = []
+    for btxt, bx0, by0, bx1, by1, bcmd in btn_defs:
+        rid = cv.create_rectangle(bx0, by0, bx1, by1, fill="#1f242f", outline="#475569", width=1)
+        tid = cv.create_text((bx0 + bx1) // 2, (by0 + by1) // 2, text=btxt, font=("Segoe UI", 8, "bold"), fill="#e2e8f0")
+        canvas_btns.append((rid, tid, bx0, by0, bx1, by1, bcmd))
+
+    # ==================== BARRA DE HARDWARE & GRÁFICO DE TELEMETRIA (PARTE INFERIOR) ====================
+    # Faixa de status de hardware (estilo "Graphics Card / Driver Version" do Afterburner)
+    cv.create_polygon(
+        24, 354, W - 24, 354, W - 14, 364, W - 14, 386, 14, 386, 14, 364,
+        fill="#161a22", outline="#333a48", width=1
+    )
+    cv.create_text(28, 370, text="PORT:", anchor="w", font=("Consolas", 8, "bold"), fill="#94a3b8")
+
     port_var = tk.StringVar(value="wokwi" if not state.esp32.port or "4000" in state.esp32.port else state.esp32.port)
     port_entry = tk.Entry(
-        ser_frame, textvariable=port_var, width=8, font=("Consolas", 9, "bold"), bg="#0f172a", fg="white", insertbackground="white"
+        root, textvariable=port_var, width=8, font=("Consolas", 8, "bold"),
+        bg="#0b0d10", fg="#38bdf8", insertbackground="white", relief="flat", bd=1
     )
-    port_entry.pack(side="left", padx=6)
+    cv.create_window(64, 370, window=port_entry, anchor="w", width=62, height=18)
 
-    ser_status_lbl = tk.Label(
-        ser_frame, text=state.esp32.status_msg, font=("Consolas", 8), fg="#9ca3af", bg="#1e293b"
-    )
-
-    def toggle_serial():
+    def toggle_link():
         if state.esp32.is_connected:
             state.esp32.auto_wokwi = False
             state.esp32.disconnect()
         else:
             state.esp32.auto_wokwi = True
             state.esp32.connect(port_var.get())
-        ser_status_lbl.config(
-            text=state.esp32.status_msg,
-            fg="#4ade80" if state.esp32.is_connected else "#f87171",
-        )
 
-    tk.Button(
-        ser_frame,
-        text="Conectar / Desconectar",
-        font=("Segoe UI", 8, "bold"),
-        bg="#2563eb",
-        fg="white",
-        relief="flat",
-        padx=8,
-        pady=2,
-        command=toggle_serial,
-    ).pack(side="left", padx=4)
-    ser_status_lbl.pack(side="left", padx=6)
+    # Botões na barra inferior: [LINK] e [BALL RST]
+    link_rect = cv.create_rectangle(134, 360, 184, 380, fill="#1e293b", outline="#475569")
+    link_txt = cv.create_text(159, 370, text="LINK", font=("Segoe UI", 7, "bold"), fill="#f8fafc")
+    canvas_btns.append((link_rect, link_txt, 134, 360, 184, 380, toggle_link))
 
-    # Barra de envio de comando Serial manual (substitui o Serial Monitor quando rfc2217 está ativo)
-    cmd_frame = tk.Frame(root, bg="#0f172a", padx=14, pady=6)
-    cmd_frame.pack(fill="x")
-    tk.Label(cmd_frame, text="⌨️ Cmd Serial:", font=("Segoe UI", 8, "bold"), fg="#38bdf8", bg="#0f172a").pack(
-        side="left"
+    rst_rect = cv.create_rectangle(190, 360, 248, 380, fill="#1e293b", outline="#475569")
+    rst_txt = cv.create_text(219, 370, text="BALL RST", font=("Segoe UI", 7, "bold"), fill="#f8fafc")
+    canvas_btns.append((rst_rect, rst_txt, 190, 360, 248, 380, lambda: reset_ball(state.model, state.data)))
+
+    hw_status_id = cv.create_text(
+        262, 370, text="ESP32 + PCA9685 // STANDBY", anchor="w", font=("Consolas", 8, "bold"), fill="#4ade80"
     )
-    cmd_var = tk.StringVar(value="STATUS")
-    cmd_entry = tk.Entry(
-        cmd_frame, textvariable=cmd_var, width=22, font=("Consolas", 9), bg="#1e293b", fg="white", insertbackground="white"
+    mode_badge_id = cv.create_text(
+        W - 26, 370, text="MANUAL · 50Hz", anchor="e", font=("Consolas", 8, "bold"), fill="#94a3b8"
     )
-    cmd_entry.pack(side="left", padx=6)
 
-    def send_manual_serial_cmd(event=None):
-        txt = cmd_var.get().strip()
-        if not txt:
-            return
-        state.esp32.send_command(txt)
-        # Se digitou 4 ângulos ex: 0,-45,20,25, também move o MuJoCo!
-        parts = [p.strip() for p in txt.replace(";", ",").split(",") if p.strip()]
-        if len(parts) == 4:
-            try:
-                vals = [float(p) for p in parts]
-                state.set_mode(False)
-                state.manual_target_deg[:] = vals
-                state.gui_dirty = True
-            except Exception:
-                pass
-        elif txt.upper() in ("ZERO", "0", "RESET"):
-            state.reset_zero_mockup()
+    # Painel do osciloscópio inferior (estilo Rivatuner Monitor)
+    GX0, GY0, GX1, GY1 = 14, 394, W - 14, H - 10
+    GW, GH = GX1 - GX0, GY1 - GY0
+    cv.create_rectangle(GX0, GY0, GX1, GY1, fill="#080a0d", outline="#2d333f", width=1)
+    for gy in range(GY0 + 20, GY1, 20):
+        cv.create_line(GX0 + 1, gy, GX1 - 1, gy, fill="#12161f")
+    for gx in range(GX0 + 30, GX1, 30):
+        cv.create_line(gx, GY0 + 1, gx, GY1 - 1, fill="#12161f")
 
-    cmd_entry.bind("<Return>", send_manual_serial_cmd)
-    tk.Button(
-        cmd_frame,
-        text="Enviar",
-        font=("Segoe UI", 8, "bold"),
-        bg="#0284c7",
-        fg="white",
-        relief="flat",
-        padx=8,
-        pady=1,
-        command=send_manual_serial_cmd,
-    ).pack(side="left", padx=2)
-    tk.Button(
-        cmd_frame,
-        text="STATUS",
-        font=("Consolas", 8),
-        bg="#334155",
-        fg="white",
-        relief="flat",
-        padx=6,
-        pady=1,
-        command=lambda: state.esp32.send_command("STATUS"),
-    ).pack(side="left", padx=2)
+    cv.create_text(GX0 + 8, GY0 + 10, text="Min: 544 us   Max: 2400 us", anchor="w", font=("Consolas", 7), fill="#64748b")
+    cv.create_text(GX1 - 8, GY0 + 10, text="PWM PULSE TELEMETRY (J1..J4)", anchor="e", font=("Consolas", 7, "bold"), fill="#94a3b8")
 
-    # Botão principal de alternância Manual <-> Desafio Loop Bolinha
-    btn_frame = tk.Frame(root, bg="#111827", padx=14, pady=8)
-    btn_frame.pack(fill="x")
+    trace_colors = ["#ef4444", "#38bdf8", "#a855f7", "#10b981"]
+    trace_lines = [cv.create_line(GX0, (GY0 + GY1) // 2, GX1, (GY0 + GY1) // 2, fill=c, width=1.5) for c in trace_colors]
 
-    mode_btn = tk.Button(
-        btn_frame,
-        text="🔄 Iniciar Desafio: Pegar e Soltar Bolinha (Loop)",
-        font=("Segoe UI", 10, "bold"),
-        bg="#0284c7",
-        fg="white",
-        activebackground="#0369a1",
-        activeforeground="white",
-        relief="flat",
-        pady=7,
-        cursor="hand2",
-        command=lambda: state.set_mode(not state.auto_loop),
-    )
-    mode_btn.pack(fill="x")
+    # ==================== EVENTOS DE MOUSE NO CANVAS ====================
+    def on_canvas_down(event):
+        x, y = event.x, event.y
+        for idx, (_, _, sy, _, _, _, _) in enumerate(slider_defs_meta := slider_items):
+            if SX0 - 10 <= x <= SX1 + 10 and sy - 10 <= y <= sy + 18:
+                active_slider["idx"] = idx
+                set_slider_from_x(idx, x)
+                return
+        for rid, tid, bx0, by0, bx1, by1, bcmd in canvas_btns:
+            if bx0 <= x <= bx1 and by0 <= y <= by1:
+                bcmd()
+                return
 
-    sub_btns = tk.Frame(btn_frame, bg="#111827", pady=6)
-    sub_btns.pack(fill="x")
-    tk.Button(
-        sub_btns,
-        text="🎯 Calibrar ZERO (0° = view_mockup)",
-        font=("Segoe UI", 8, "bold"),
-        bg="#059669",
-        fg="white",
-        relief="flat",
-        padx=6,
-        pady=4,
-        command=state.reset_zero_mockup,
-    ).pack(side="left", expand=True, fill="x", padx=(0, 3))
-    tk.Button(
-        sub_btns,
-        text="🏀 Reset Bolinha (R)",
-        font=("Segoe UI", 8),
-        bg="#374151",
-        fg="white",
-        relief="flat",
-        padx=6,
-        pady=4,
-        command=lambda: reset_ball(state.model, state.data),
-    ).pack(side="left", expand=True, fill="x", padx=3)
-    tk.Button(
-        sub_btns,
-        text="📍 Ir até Bolinha (IK)",
-        font=("Segoe UI", 8),
-        bg="#374151",
-        fg="white",
-        relief="flat",
-        padx=6,
-        pady=4,
-        command=state.move_to_ball_ik,
-    ).pack(side="left", expand=True, fill="x", padx=(3, 0))
+    def on_canvas_drag(event):
+        if active_slider["idx"] is not None:
+            set_slider_from_x(active_slider["idx"], event.x)
 
-    # Sliders dos 4 servos MG90 + Telemetria PCA9685 (us e tick)
-    sliders_frame = tk.Frame(root, bg="#111827", padx=14, pady=2)
-    sliders_frame.pack(fill="x")
+    def on_canvas_up(event):
+        active_slider["idx"] = None
 
-    joint_specs = [
-        (0, "CH0 · J1 Base (Z) [-90°..+90°]", J1_MIN_DEG, J1_MAX_DEG, "#38bdf8"),
-        (1, "CH1 · J2 Ombro (X) [-72°..+60°]", J2_MIN_DEG, J2_MAX_DEG, "#22d3ee"),
-        (2, "CH2 · J3 Cotovelo (X) [-35°..+65°]", J3_MIN_DEG, J3_MAX_DEG, "#818cf8"),
-        (3, "CH3 · J4 Garra [0°=Fechada..+38°]", GARRA_MIN_DEG, GARRA_MAX_DEG, "#34d399"),
-    ]
+    cv.bind("<Button-1>", on_canvas_down)
+    cv.bind("<B1-Motion>", on_canvas_drag)
+    cv.bind("<ButtonRelease-1>", on_canvas_up)
 
-    slider_vars = []
-    val_labels = []
-    updating_gui = {"lock": False}
-
-    def on_slider_change(idx, val_str):
-        if updating_gui["lock"]:
-            return
-        val = float(val_str)
-        if state.auto_loop:
-            state.set_mode(False)
-        state.manual_target_deg[idx] = val
-        state.manual_target_deg[:] = clamp_safe_workspace(*state.manual_target_deg)
-        state.gui_dirty = True
-
-    def nudge_joint(idx, delta_deg):
-        if state.auto_loop:
-            state.set_mode(False)
-        lo = JOINT_MIN_DEGS[idx]
-        hi = JOINT_MAX_DEGS[idx]
-        new_deg = max(lo, min(hi, state.manual_target_deg[idx] + delta_deg))
-        state.manual_target_deg[idx] = new_deg
-        state.manual_target_deg[:] = clamp_safe_workspace(*state.manual_target_deg)
-        state.gui_dirty = True
-
-    for idx, title, lo, hi, color in joint_specs:
-        row = tk.Frame(sliders_frame, bg="#1f2937", padx=10, pady=5)
-        row.pack(fill="x", pady=3)
-
-        top = tk.Frame(row, bg="#1f2937")
-        top.pack(fill="x")
-        tk.Label(top, text=title, font=("Segoe UI", 9, "bold"), fg=color, bg="#1f2937").pack(side="left")
-        lbl_val = tk.Label(
-            top, text="0.0° | 1500 us | tick 307", font=("Consolas", 8, "bold"), fg="#f9fafb", bg="#1f2937"
-        )
-        lbl_val.pack(side="right")
-        val_labels.append(lbl_val)
-
-        ctrl_row = tk.Frame(row, bg="#1f2937")
-        ctrl_row.pack(fill="x", pady=(2, 0))
-
-        tk.Button(
-            ctrl_row,
-            text="-2°",
-            font=("Consolas", 8, "bold"),
-            bg="#374151",
-            fg="white",
-            relief="flat",
-            width=4,
-            command=lambda i=idx: nudge_joint(i, -2.0),
-        ).pack(side="left", padx=(0, 6))
-
-        var = tk.DoubleVar(value=0.0)
-        slider_vars.append(var)
-        sc = tk.Scale(
-            ctrl_row,
-            from_=lo,
-            to=hi,
-            resolution=0.5,
-            orient="horizontal",
-            variable=var,
-            showvalue=False,
-            bg="#1f2937",
-            fg="white",
-            troughcolor="#374151",
-            highlightthickness=0,
-            bd=0,
-            command=lambda v, i=idx: on_slider_change(i, v),
-        )
-        sc.pack(side="left", fill="x", expand=True)
-
-        tk.Button(
-            ctrl_row,
-            text="+2°",
-            font=("Consolas", 8, "bold"),
-            bg="#374151",
-            fg="white",
-            relief="flat",
-            width=4,
-            command=lambda i=idx: nudge_joint(i, +2.0),
-        ).pack(side="left", padx=(6, 0))
-
-    # Controle de Sensibilidade / Velocidade dos Servos
-    sens_frame = tk.Frame(root, bg="#1f2937", padx=10, pady=7)
-    sens_frame.pack(fill="x", padx=14, pady=(6, 4))
-    sens_top = tk.Frame(sens_frame, bg="#1f2937")
-    sens_top.pack(fill="x")
-    tk.Label(
-        sens_top,
-        text="⚙️ Sensibilidade / Velocidade Manual dos Servos MG90",
-        font=("Segoe UI", 9, "bold"),
-        fg="#fbbf24",
-        bg="#1f2937",
-    ).pack(side="left")
-    sens_lbl = tk.Label(
-        sens_top,
-        text=f"{state.max_deg_per_sec:.0f} °/s (Suave)",
-        font=("Consolas", 9),
-        fg="#f9fafb",
-        bg="#1f2937",
-    )
-    sens_lbl.pack(side="right")
-
-    def on_sens_change(val_str):
-        v = float(val_str)
-        state.max_deg_per_sec = v
-        tag = "Ultra Fino" if v < 25 else ("Suave" if v <= 55 else "Rápido")
-        sens_lbl.config(text=f"{v:.0f} °/s ({tag})")
-
-    sens_scale = tk.Scale(
-        sens_frame,
-        from_=10.0,
-        to=120.0,
-        resolution=2.0,
-        orient="horizontal",
-        showvalue=False,
-        bg="#1f2937",
-        fg="white",
-        troughcolor="#374151",
-        highlightthickness=0,
-        bd=0,
-        command=on_sens_change,
-    )
-    sens_scale.set(state.max_deg_per_sec)
-    sens_scale.pack(fill="x", pady=(3, 0))
-
+    # ==================== ATUALIZAÇÃO EM TEMPO REAL (SYNC_GUI) ====================
     def sync_gui():
         if not state.running:
             return
-        updating_gui["lock"] = True
-        try:
-            if state.auto_loop:
-                mode_btn.config(
-                    text="⏸️ Pausar Desafio e Assumir Controle Manual",
-                    bg="#dc2626",
-                    activebackground="#b91c1c",
-                )
-                status_lbl.config(text=state.loop_ctrl.status_text, fg="#fde047")
-            else:
-                mode_btn.config(
-                    text="🔄 Iniciar Desafio: Pegar e Soltar Bolinha (Loop)",
-                    bg="#0284c7",
-                    activebackground="#0369a1",
-                )
-                bx, by, bz = state.data.xpos[state.ball_id]
-                status_lbl.config(
-                    text=f"Modo Manual · PCA9685 @ {state.pwm_freq_hz:.0f}Hz · Bolinha X={bx*1000:.0f} Y={by*1000:.0f} mm",
-                    fg="#e5e7eb",
-                )
 
-            ser_status_lbl.config(
-                text=state.esp32.status_msg,
-                fg="#4ade80" if state.esp32.is_connected else "#fbbf24",
-            )
-            for i in range(4):
-                deg = state.smoothed_deg[i]
-                pulse_us, tick = deg_to_pca9685(deg, state.pwm_freq_hz)
-                if state.gui_dirty or state.auto_loop:
-                    slider_vars[i].set(round(state.manual_target_deg[i], 1))
-                val_labels[i].config(text=f"{deg:+5.1f}° | {pulse_us:4.0f} us | tick {tick:3d}")
-            state.gui_dirty = False
-        finally:
-            updating_gui["lock"] = False
+        degs = state.smoothed_deg
+        pulses = []
+        ticks = []
+        for i in range(4):
+            pus, tk_val = deg_to_pca9685(degs[i], state.pwm_freq_hz)
+            pulses.append(pus)
+            ticks.append(tk_val)
+            pulse_history[i].append(pus)
+
+        # Atualiza ponteiros e leituras dos 2 medidores radiais
+        update_dial_pointer(ptr_j1, LCX, LCY, DR, degs[0])
+        update_dial_pointer(ptr_j2, LCX, LCY, DR, degs[1])
+        update_dial_pointer(ptr_j3, RCX, RCY, DR, degs[2])
+        update_dial_pointer(ptr_j4, RCX, RCY, DR, degs[3])
+
+        cv.itemconfig(l_top_deg, text=f"{degs[0]:+5.1f}°")
+        cv.itemconfig(l_top_us, text=f"{pulses[0]:4.0f}us")
+        cv.itemconfig(l_bot_deg, text=f"{degs[1]:+5.1f}°")
+        cv.itemconfig(l_bot_us, text=f"{pulses[1]:4.0f}us")
+
+        cv.itemconfig(r_top_deg, text=f"{degs[2]:+5.1f}°")
+        cv.itemconfig(r_top_us, text=f"{pulses[2]:4.0f}us")
+        cv.itemconfig(r_bot_deg, text=f"{degs[3]:+5.1f}°")
+        cv.itemconfig(r_bot_us, text=f"{pulses[3]:4.0f}us")
+
+        # Atualiza os 5 sliders na coluna central
+        vals_now = [degs[0], degs[1], degs[2], degs[3], state.max_deg_per_sec]
+        for idx, (lo, hi, sy, val_id, fill_id, knob_id, _) in enumerate(slider_items):
+            v = vals_now[idx]
+            ratio = max(0.0, min(1.0, (v - lo) / max(1e-6, hi - lo)))
+            kx = SX0 + ratio * SW
+            cv.coords(fill_id, SX0 + 1, sy + 2, kx, sy + 8)
+            cv.coords(knob_id, kx - 6, sy - 3, kx + 6, sy + 13)
+            if idx < 4:
+                cv.itemconfig(val_id, text=f"{v:+5.1f}° | T:{ticks[idx]:3d}")
+            else:
+                cv.itemconfig(val_id, text=f"{v:3.0f} °/s")
+
+        # Atualiza destaque do botão AUTO LOOP e textos de status
+        loop_rect, loop_txt = canvas_btns[1][0], canvas_btns[1][1]
+        if state.auto_loop:
+            cv.itemconfig(loop_rect, fill="#991b1b", outline="#f87171")
+            cv.itemconfig(loop_txt, text="STOP LOOP")
+            cv.itemconfig(mode_badge_id, text=f"AUTO LOOP #{state.loop_ctrl.cycle_count}", fill="#f87171")
+        else:
+            cv.itemconfig(loop_rect, fill="#1f242f", outline="#475569")
+            cv.itemconfig(loop_txt, text="AUTO LOOP")
+            cv.itemconfig(mode_badge_id, text="MANUAL · SAFE", fill="#38bdf8")
+
+        cv.itemconfig(
+            hw_status_id,
+            text=f"ESP32: {state.esp32.status_msg.upper()}",
+            fill="#4ade80" if state.esp32.is_connected else "#f59e0b",
+        )
+
+        # Atualiza traços do osciloscópio inferior
+        for i in range(4):
+            pts = []
+            hist = pulse_history[i]
+            n_pts = len(hist)
+            for k, pus in enumerate(hist):
+                px = GX0 + 4 + (k / max(1, n_pts - 1)) * (GW - 8)
+                norm = (pus - MG90_MIN_US) / (MG90_MAX_US - MG90_MIN_US)
+                py = (GY1 - 6) - norm * (GH - 24)
+                pts.extend((px, py))
+            if len(pts) >= 4:
+                cv.coords(trace_lines[i], *pts)
+
+        state.gui_dirty = False
 
     def on_close():
         state.running = False
