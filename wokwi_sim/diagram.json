@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "author": "Ryhan Schutz",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo_j1",
+      "top": -140,
+      "left": -180,
+      "attrs": { "label": "J1 Base (D25)" }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo_j2",
+      "top": -20,
+      "left": -180,
+      "attrs": { "label": "J2 Ombro (D26)" }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo_j3",
+      "top": 100,
+      "left": -180,
+      "attrs": { "label": "J3 Cotovelo (D27)" }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo_j4",
+      "top": 220,
+      "left": -180,
+      "attrs": { "label": "J4 Garra (D14)" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    [ "esp:D25", "servo_j1:PWM", "gold", [ "h0" ] ],
+    [ "esp:D26", "servo_j2:PWM", "cyan", [ "h0" ] ],
+    [ "esp:D27", "servo_j3:PWM", "dodgerblue", [ "h0" ] ],
+    [ "esp:D14", "servo_j4:PWM", "limegreen", [ "h0" ] ],
+    [ "esp:VIN", "servo_j1:V+", "red", [ "h0" ] ],
+    [ "esp:VIN", "servo_j2:V+", "red", [ "h0" ] ],
+    [ "esp:VIN", "servo_j3:V+", "red", [ "h0" ] ],
+    [ "esp:VIN", "servo_j4:V+", "red", [ "h0" ] ],
+    [ "esp:GND.2", "servo_j1:GND", "black", [ "h0" ] ],
+    [ "esp:GND.2", "servo_j2:GND", "black", [ "h0" ] ],
+    [ "esp:GND.2", "servo_j3:GND", "black", [ "h0" ] ],
+    [ "esp:GND.2", "servo_j4:GND", "black", [ "h0" ] ]
+  ],
+  "dependencies": {}
+}
+
