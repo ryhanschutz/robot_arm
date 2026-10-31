@@ -299,8 +299,7 @@ Para executar a co-simulação **MuJoCo + Wokwi no VS Code**:
 ```text
 robot_arm/
 ├── models/
-│   ├── arm.xml                        # Modelo MJCF principal calibrado (4-DOF, limites seguros e engrenagem da garra)
-│   └── experiments/                   # Modelos intermediarios de auditoria de montagem e eixo J1
+│   └── arm.xml                        # Modelo MJCF principal calibrado (4-DOF, limites seguros e engrenagem da garra)
 ├── meshes/                            # 7 malhas STL exportadas na origem global do CAD (escala 1:1000 m)
 ├── sim/
 │   ├── simulador.py                   # Simulador principal (MuJoCo + Tkinter + IK 3D + Anti-Colisao + Ponte ESP32/Wokwi)
@@ -323,9 +322,7 @@ robot_arm/
 │   └── case/                          # Gabinete e tampa da eletronica de controle
 ├── cad/                               # Arquivos nativos SolidWorks (.SLDPRT / .SLDASM) — somente leitura
 ├── docs/
-│   ├── images/                        # GIFs, cockpit Schutz Controls, paineis e envelope de seguranca
-│   ├── ARQUITETURA_E_ENGENHARIA.md    # Documento tecnico completo (cinematica, fisica, problemas e solucoes)
-│   └── README_MODELOS.md              # Documentacao do mapeamento geometrico CAD -> STL -> MJCF
+│   └── images/                        # GIFs, cockpit Schutz Controls, paineis e envelope de seguranca
 ├── requirements.txt
 └── README.md
 ```
