@@ -53,7 +53,7 @@ A arquitetura integra três camadas sincronizadas em tempo real:
 ```mermaid
 flowchart LR
     subgraph SIM["Camada de Simulacao e Controle (PC / Python)"]
-        IK["Cinematica Inversa 3D\n& Controle Manual"] --> SAFE["Filtro de Envelope\nAnti-Colisao J3 >= f(J2)"]
+        IK["Cinematica Inversa 3D\n& Cockpit Schutz Controls"] --> SAFE["Filtro de Envelope\nAnti-Colisao J3 >= f(J2)"]
         SAFE --> MJ["Motor Fisico MuJoCo\n(models/arm.xml @ 500 Hz)"]
         SAFE --> BRIDGE["Ponte Serial / TCP\n(ESP32SerialBridge @ 30 Hz)"]
     end
@@ -68,6 +68,21 @@ flowchart LR
     PCA --> SERVOS["4x Servos MG90\n(544 us a 2400 us)"]
     GPIO --> WSERVOS["4x Wokwi Servo\n(Simulacao Integrada)"]
 ```
+
+### Interface de Comando e Telemetria (`SCHUTZ CONTROLS`)
+
+O painel de controle ([`create_tk_panel`](sim/simulador.py#L526-L830)) foi projetado em `tk.Canvas` vetorial no estilo de instrumentação de hardware (*cockpit*), reunindo em uma única janela:
+- **Mostradores Radiais Duplos (`J1/J2` à esquerda e `J3/J4` à direita)**: Exibem em tempo real o ângulo físico da junta (em graus) e a largura de pulso PWM correspondente (em microssegundos, `544..2400 µs`), com ponteiros móveis na escala angular de `-90°` a `+90°`.
+- **Coluna Central de Sliders Segmentados**: Controle individual de `J1 BASE`, `J2 SHOULDER`, `J3 ELBOW`, `J4 GRIPPER` (com indicação simultânea do registrador `Tick` de 12 bits do PCA9685, ex: `T:307`) e ajuste dinâmico do limitador de velocidade angular (`SPEED`, em `°/s`), além dos acionadores diretos `ZERO`, `AUTO LOOP` e `IK TARGET`.
+- **Osciloscopio Inferior de Pulsos PWM**: Gráfico temporal contínuo das 4 larguras de pulso enviadas ao controlador embarcado, acompanhado da barra de vínculo Serial/TCP (`PORT: wokwi` ou `COMx`).
+
+<div align="center">
+
+<img src="docs/images/schutz_controls_cockpit.png" alt="Interface de comando e telemetria SCHUTZ CONTROLS // 4-DOF SERVO COCKPIT" width="92%">
+
+<sub><b>Figura 3.</b> Cockpit de controle e telemetria <code>SCHUTZ CONTROLS</code> conectado em tempo real ao simulador Wokwi via <code>localhost:4000</code> e ao motor físico MuJoCo.</sub>
+
+</div>
 
 ---
 
@@ -108,7 +123,7 @@ Embora um servomotor MG90 isolado aceite comandos entre `-90.0°` (`544 µs`) e 
 
 <img src="docs/images/envelope_seguranca.png" alt="Mapa 2D do Envelope Cinematico de Seguranca Anti-Colisao J2 vs J3 e Parametros PWM PCA9685" width="100%">
 
-<sub><b>Figura 3.</b> Mapeamento exaustivo do espaço de juntas $(J_2, J_3)$ (10.658 poses avaliadas nas malhas STL e cápsulas de contato), destacando a zona de colisão com o solo (vermelho), a fronteira polinomial ativa (amarelo) e a região operacional permitida (verde).</sub>
+<sub><b>Figura 4.</b> Mapeamento exaustivo do espaço de juntas $(J_2, J_3)$ (10.658 poses avaliadas nas malhas STL e cápsulas de contato), destacando a zona de colisão com o solo (vermelho), a fronteira polinomial ativa (amarelo) e a região operacional permitida (verde).</sub>
 
 </div>
 
@@ -146,7 +161,7 @@ O controlador autônomo [`PickAndDropLoopController`](sim/simulador.py#L323-L431
 
 <img src="docs/images/painel_desafio_bolinha.png" alt="Painel das 6 fases do ciclo Pick-and-Drop no MuJoCo" width="100%">
 
-<sub><b>Figura 4.</b> Decomposição dos 6 estágios principais do ciclo autônomo: (1) aproximação superior com garra aberta, (2) descida controlada até o ponto de coleta, (3) fechamento físico da garra sobre a esfera, (4) elevação vertical segura, (5) transporte angular até a zona de descarga e (6) abertura da garra com queda livre no solo.</sub>
+<sub><b>Figura 5.</b> Decomposição dos 6 estágios principais do ciclo autônomo: (1) aproximação superior com garra aberta, (2) descida controlada até o ponto de coleta, (3) fechamento físico da garra sobre a esfera, (4) elevação vertical segura, (5) transporte angular até a zona de descarga e (6) abertura da garra com queda livre no solo.</sub>
 
 </div>
 
@@ -172,7 +187,7 @@ Dado o ponto alvo $\mathbf{p} = (x, y, z)^\top$ para o centro da garra (`site="g
 
 <img src="docs/images/painel_juntas.png" alt="Painel de verificacao cinematica das 6 poses de referencia" width="100%">
 
-<sub><b>Figura 5.</b> Painel de verificação cinemática renderizado offscreen por <code>sim/experiments/testar_robo_completo.py</code> ilustrando a pose neutra de calibração (<code>0°, 0°, 0°, 0°</code>) e excursões independentes e combinadas das juntas.</sub>
+<sub><b>Figura 6.</b> Painel de verificação cinemática renderizado offscreen por <code>sim/experiments/testar_robo_completo.py</code> ilustrando a pose neutra de calibração (<code>0°, 0°, 0°, 0°</code>) e excursões independentes e combinadas das juntas.</sub>
 
 </div>
 
@@ -308,7 +323,8 @@ robot_arm/
 │   └── case/                          # Gabinete e tampa da eletronica de controle
 ├── cad/                               # Arquivos nativos SolidWorks (.SLDPRT / .SLDASM) — somente leitura
 ├── docs/
-│   ├── images/                        # GIFs, paineis de poses e diagrama do envelope de seguranca
+│   ├── images/                        # GIFs, cockpit Schutz Controls, paineis e envelope de seguranca
+│   ├── ARQUITETURA_E_ENGENHARIA.md    # Documento tecnico completo (cinematica, fisica, problemas e solucoes)
 │   └── README_MODELOS.md              # Documentacao do mapeamento geometrico CAD -> STL -> MJCF
 ├── requirements.txt
 └── README.md
